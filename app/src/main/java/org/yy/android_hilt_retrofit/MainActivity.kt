@@ -43,13 +43,18 @@ import javax.inject.Singleton
 object HealthCheckModule {
 
     @Provides
-    fun HealthCheckService(
-            // Potential dependencies of this type
-    ):HealthCheckService{
-        return  Retrofit.Builder()
+    fun MyRetrofit():Retrofit{
+        return Retrofit.Builder()
                 .baseUrl("https://api.github.com/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
+    }
+
+    @Provides
+    fun HealthCheckService(
+            retrofit: Retrofit
+    ):HealthCheckService{
+        return  retrofit
                 .create(HealthCheckService::class.java)
     }
 }
@@ -90,6 +95,7 @@ class MainActivity : AppCompatActivity() {
         //    val res = service.healthCheck()
         //    Log.d("xxx",res.toString())
         //}
+
 
     }
 
