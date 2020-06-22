@@ -5,14 +5,17 @@ import android.util.Log
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.components.ActivityComponent
+import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
+import javax.inject.Inject
 
 
 @Module
@@ -20,7 +23,7 @@ import retrofit2.http.GET
 object HealthCheckModule {
 
     @Provides
-    fun MyRetrofit():Retrofit{
+    fun provideRetrofit():Retrofit{
         return Retrofit.Builder()
                 .baseUrl("https://api.github.com/")
                 .addConverterFactory(GsonConverterFactory.create())
@@ -28,7 +31,7 @@ object HealthCheckModule {
     }
 
     @Provides
-    fun HealthCheckService(
+    fun provideHealthCheckService(
             retrofit: Retrofit
     ):HealthCheckService{
         return  retrofit
@@ -36,7 +39,7 @@ object HealthCheckModule {
     }
 
     @Provides
-    fun MyHealthCheckRepository(
+    fun provideHealthCheckRepository(
             service:HealthCheckService
     ):HealthCheckRepository{
         return HealthCheckRepository(service)
@@ -46,13 +49,19 @@ object HealthCheckModule {
 
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(R.layout.activity_main) {
 
     private val viewModel: MainActivityViewModel by viewModels()
 
+    @Inject
+    lateinit var healthCheckRepository: HealthCheckRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+
+        lifecycleScope.launch {
+            Log.d("xxx","${healthCheckRepository.getHealth()}")
+        }
 
         viewModel.health.observe(this, Observer {
             Log.d("xxx", "viewModel: ${it.toString()}")
