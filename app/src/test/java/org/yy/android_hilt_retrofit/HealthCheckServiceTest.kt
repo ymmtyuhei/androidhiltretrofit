@@ -5,6 +5,7 @@ import junit.framework.Assert.assertNotNull
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 class HealthCheckServiceTest {
 
@@ -12,6 +13,7 @@ class HealthCheckServiceTest {
     fun healthCheckServiceTest(){
         val retrofit = Retrofit.Builder()
             .baseUrl("https://api.github.com/")
+            .addConverterFactory(GsonConverterFactory.create())
             .build()
         val service = retrofit.create(HealthCheckService::class.java)
         runBlocking {
