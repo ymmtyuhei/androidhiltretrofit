@@ -2,21 +2,17 @@ package org.yy.android_hilt_retrofit
 
 import android.os.Bundle
 import android.util.Log
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.Observer
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.components.ActivityComponent
-import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
-import javax.inject.Inject
-import javax.inject.Singleton
-import androidx.activity.viewModels
-import androidx.lifecycle.Observer
 
 
 @Module
@@ -38,7 +34,16 @@ object HealthCheckModule {
         return  retrofit
                 .create(HealthCheckService::class.java)
     }
+
+    @Provides
+    fun MyHealthCheckRepository(
+            service:HealthCheckService
+    ):HealthCheckRepository{
+        return HealthCheckRepository(service)
+    }
+
 }
+
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -66,9 +71,15 @@ data class HealthCheckResponse (
     }
 }
 
+
 interface HealthCheckService {
 
     @GET("/")
     suspend fun healthCheck():HealthCheckResponse
 
+}
+
+
+class HealthCheckRepository(private val healthCheckService: HealthCheckService) {
+    suspend fun getHealth() = healthCheckService.healthCheck()
 }

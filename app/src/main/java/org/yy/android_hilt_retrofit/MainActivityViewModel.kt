@@ -9,10 +9,10 @@ import androidx.lifecycle.liveData
 
 
 class MainActivityViewModel @ViewModelInject constructor(
-    private val service: HealthCheckService,
+    private val repository: HealthCheckRepository,
     @Assisted private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     val health: LiveData<HealthCheckResponse> = liveData {
-        emit(service.healthCheck())
+        emit(repository.getHealth())
     }
 }
