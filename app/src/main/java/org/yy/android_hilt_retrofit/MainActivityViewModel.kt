@@ -7,12 +7,12 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.liveData
 
-//class MainActivityViewModel @ViewModelInject constructor(
-//    private val healthRepository: HealthCheckRepository,
-//    @Assisted private val savedStateHandle: SavedStateHandle
-//) : ViewModel() {
-//
-//    val health: LiveData<HealthCheckResponse> = liveData {
-//        emit(healthRepository.getHealth())
-//    }
-//}
+
+class MainActivityViewModel @ViewModelInject constructor(
+    private val service: HealthCheckService,
+    @Assisted private val savedStateHandle: SavedStateHandle
+) : ViewModel() {
+    val health: LiveData<HealthCheckResponse> = liveData {
+        emit(service.healthCheck())
+    }
+}
