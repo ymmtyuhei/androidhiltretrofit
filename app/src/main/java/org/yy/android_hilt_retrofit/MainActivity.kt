@@ -16,6 +16,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import javax.inject.Inject
+import javax.inject.Qualifier
 
 
 @Module
@@ -47,12 +48,38 @@ object HealthCheckModule {
 
 }
 
+/**
+ * モック用のアノテーション
+ */
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+internal annotation class MockRepository
+
+
+@Module
+@InstallIn(ActivityComponent::class)
+object HealthCheckMockModule {
+    @MockRepository
+    @Provides
+    fun provideMockHealthCheckService():HealthCheckService{
+        return  MockHealthCheckService()
+    }
+
+    @MockRepository
+    @Provides
+    fun provideHealthCheckRepository(
+            service:HealthCheckService
+    ):HealthCheckRepository{
+        return HealthCheckRepository(service)
+    }
+}
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(R.layout.activity_main) {
 
     private val viewModel: MainActivityViewModel by viewModels()
 
+    @MockRepository
     @Inject
     lateinit var healthCheckRepository: HealthCheckRepository
 
@@ -63,9 +90,9 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
             Log.d("xxx","${healthCheckRepository.getHealth()}")
         }
 
-        viewModel.health.observe(this, Observer {
-            Log.d("xxx", "viewModel: ${it.toString()}")
-        })
+//        viewModel.health.observe(this, Observer {
+//            Log.d("xxx", "viewModel: ${it.toString()}")
+//        })
 
     }
 
@@ -92,3 +119,13 @@ interface HealthCheckService {
 class HealthCheckRepository(private val healthCheckService: HealthCheckService) {
     suspend fun getHealth() = healthCheckService.healthCheck()
 }
+
+class MockHealthCheckService : HealthCheckService {
+
+    override suspend fun healthCheck(): HealthCheckResponse {
+        return HealthCheckResponse("this is mock response")
+    }
+
+}
+
+//fun provideMockHealthApi(retrofit: Retrofit): MockHealthCheckApi()

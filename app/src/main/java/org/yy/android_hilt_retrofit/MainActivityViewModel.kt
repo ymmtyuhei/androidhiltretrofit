@@ -9,7 +9,7 @@ import androidx.lifecycle.liveData
 
 
 class MainActivityViewModel @ViewModelInject constructor(
-    private val repository: HealthCheckRepository,
+    @MockRepository private val repository: HealthCheckRepository,
     @Assisted private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     val health: LiveData<HealthCheckResponse> = liveData {
