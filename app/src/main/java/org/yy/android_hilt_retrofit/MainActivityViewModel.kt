@@ -12,7 +12,7 @@ class MainActivityViewModel @ViewModelInject constructor(
     private val repository: HealthCheckRepository,
     @Assisted private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-    val health: LiveData<HealthCheckResponse> = liveData {
+    val health: LiveData<Result<HealthCheckResponse>> = liveData {
         emit(repository.getHealth())
     }
 }
