@@ -11,7 +11,9 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.components.ActivityComponent
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -23,45 +25,65 @@ import java.io.IOException
 import javax.inject.Inject
 
 
-internal class LoggingInterceptor : Interceptor {
-    @Throws(IOException::class)
-    override fun intercept(chain: Interceptor.Chain): Response {
-        val request = chain.request()
-        val t1 = System.nanoTime()
-        logger.info(
-            java.lang.String.format(
-                "Sending request %s on %s%n%s",
-                request.url, chain.connection(), request.headers
-            )
-        )
-        val response: Response = chain.proceed(request)
-        val t2 = System.nanoTime()
-        logger.info(
-            java.lang.String.format(
-                "Received response for %s in %.1fms%n%s",
-                response.request.url, (t2 - t1) / 1e6, response.headers
-            )
-        )
-        return response
+interface UserRepository{
+    suspend fun getUserToken():String
+}
+class UserRepositoryImpl:UserRepository{
+    override suspend fun getUserToken(): String {
+        delay(500)
+        return "Bearer mocktokenxxx"
     }
 }
+
+class TokenInterceptor constructor(val userRepository: UserRepository) :Interceptor{
+
+    override fun intercept(chain: Interceptor.Chain): Response {
+
+        val original = chain.request()
+
+        if (original.url.encodedPath.contains("/login")&& original.method == "post") {
+            return  chain.proceed(original)
+        }
+
+        // OkHttpのスレッドで実行されているのでブロックしても問題ない
+        val token = runBlocking { userRepository.getUserToken() }
+
+        val request = original
+            .newBuilder()
+            .addHeader("Authorization",token)
+            .url(original.url)
+            .build()
+
+        return chain.proceed(request)
+    }
+}
+
 
 @Module
 @InstallIn(ActivityComponent::class)
 object HealthCheckModule {
 
     @Provides
-    fun provideOkHttpClient():OkHttpClient{
+    fun userRepository():UserRepository{
+        return  UserRepositoryImpl()
+    }
+
+    @Provides
+    fun provideOkHttpClient(
+        userRepository: UserRepository
+    ):OkHttpClient{
         return OkHttpClient()
             .newBuilder()
-            .addInterceptor(LoggingInterceptor())
+            .addInterceptor(
+                TokenInterceptor(userRepository)
+            )
             .build()
     }
 
     @Provides
     fun provideRetrofit(okHttpClient: OkHttpClient):Retrofit{
         return Retrofit.Builder()
-                .baseUrl("https://api.github.com/")
+                .baseUrl("https://03874f53bf488fa409f0d35f558f683a.m.pipedream.net")
                 .client(okHttpClient)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
