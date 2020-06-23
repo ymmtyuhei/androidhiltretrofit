@@ -14,16 +14,25 @@ import dagger.hilt.android.components.ActivityComponent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import okhttp3.Interceptor
-import okhttp3.OkHttpClient
-import okhttp3.Response
+import okhttp3.*
 import okhttp3.internal.http2.Http2Reader.Companion.logger
+import retrofit2.HttpException
+import retrofit2.Response.error
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import java.io.IOException
+import java.lang.Exception
 import javax.inject.Inject
 
+
+enum class UserReposFailedCause{
+    NotAuthorized,
+    InvalidToken,
+    Unknown
+}
+open class UserRepositoryException(msg:String,cause:UserReposFailedCause):IOException(msg)// OkHttp3 InterceptorがキャッチできるのはIOException
+class UserRepositoryFailed(cause:UserReposFailedCause) : UserRepositoryException(cause.toString(),cause)
 
 interface UserRepository{
     suspend fun getUserToken():String
@@ -31,6 +40,7 @@ interface UserRepository{
 class UserRepositoryImpl:UserRepository{
     override suspend fun getUserToken(): String {
         delay(500)
+        throw UserRepositoryException("認証に失敗",UserReposFailedCause.NotAuthorized) // エラースローテスト
         return "Bearer mocktokenxxx"
     }
 }
@@ -119,7 +129,11 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         super.onCreate(savedInstanceState)
 
         lifecycleScope.launch {
-            Log.d("xxx","${healthCheckRepository.getHealth()}")
+            try {
+                Log.d("xxx","${healthCheckRepository.getHealth()}")
+            }catch (e: UserRepositoryException) {
+                Log.w("xxx", "認証エラーキャッチ on Activity")
+            }
         }
 
         viewModel.health.observe(this, Observer {
