@@ -40,7 +40,7 @@ interface UserRepository{
 class UserRepositoryImpl:UserRepository{
     override suspend fun getUserToken(): String {
         delay(500)
-        throw UserRepositoryException("認証に失敗",UserReposFailedCause.NotAuthorized) // エラースローテスト
+        throw UserRepositoryFailed(UserReposFailedCause.NotAuthorized) // エラースローテスト
         return "Bearer mocktokenxxx"
     }
 }
